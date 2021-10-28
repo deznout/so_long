@@ -1,97 +1,136 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   test.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: hbrent <marvin@42.fr>                      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/10/28 14:30:38 by hbrent            #+#    #+#             */
+/*   Updated: 2021/10/28 14:30:51 by hbrent           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "solong.h"
 
-int worldMap[mapWidth][mapHeight]=
-		{
-		{1,1,1,1,1,1,1,1,1,1,1,1,1},
-		{1,0,0,1,0,0,0,0,0,0,0,2,1},
-		{1,0,0,0,0,1,1,1,1,1,0,0,1},
-		{1,3,0,0,1,1,4,0,0,0,0,0,1},
-		{1,1,1,1,1,1,1,1,1,1,1,1,1},
-		};
-
-//img.img = mlx_new_image(mlx, 1920, 1080);
-//img.addr = mlx_get_data_addr(img.img, &img.bits_per_pixel, &img.line_length, &img.endian);
-
-void	drawMap()
+int	check_content(t_map *map)
 {
-	void	*mlx;
-	void	*mlx_win;
-	t_img	img;
-	int c = 0;
-	int k = 0;
-
-	mlx = mlx_init();
-	mlx_win = mlx_new_window(mlx, 1000, 1000, "Monkey Jam!");
-	img.exit = mlx_xpm_file_to_image(mlx, "./img/exit.xpm", &c, &k);
-	img.enemy = mlx_xpm_file_to_image(mlx, "./img/enemy.xpm", &c, &k);
-	img.wall = mlx_xpm_file_to_image(mlx, "./img/wall.xpm", &c, &k);
-	img.apple = mlx_xpm_file_to_image(mlx, "./img/apple.xpm", &c, &k);
-	img.bg = mlx_xpm_file_to_image(mlx, "./img/bg.xpm", &c, &k);
-	img.sprite = mlx_xpm_file_to_image(mlx, "./img/sprite.xpm", &c, &k);
-	for (int y = 0; y < mapHeight * 64; y += 64)
+	map->coins = 0;
+	map->exits = 0;
+	map->pos = 0;
+	map->i = 0;
+	while (map->i < map->height)
 	{
-		for (int x = 0; x < mapWidth * 64; x += 64)
+		map->j = 0;
+		while (map->arr[map->i][map->j])
 		{
-			if (worldMap[y/64][x/64] == 1)
-				mlx_put_image_to_window(mlx, mlx_win, img.wall, x, y);
-			if (worldMap[y/64][x/64] != 1)
-				mlx_put_image_to_window(mlx, mlx_win, img.bg, x, y);
-			if (worldMap[y/64][x/64] == 2)
-				mlx_put_image_to_window(mlx, mlx_win, img.apple, x, y);
-			if (worldMap[y/64][x/64] == 3)
-				mlx_put_image_to_window(mlx, mlx_win, img.sprite, x, y);
-			if (worldMap[y/64][x/64] == 4)
-				mlx_put_image_to_window(mlx, mlx_win, img.exit, x, y);
+			if (!ft_strchr("01CVEP", map->arr[map->i][map->j]))
+				return (0);
+			if (map->arr[map->i][map->j] == 'C')
+				map->coins++;
+			if (map->arr[map->i][map->j] == 'E')
+				map->exits++;
+			if (map->arr[map->i][map->j] == 'P')
+				map->pos++;
+			map->j++;
 		}
+		map->i++;
 	}
-	mlx_loop(mlx);
+	if (map->coins < 1 && map->exits < 1 && map->pos < 1)
+		return (0);
+	return (1);
 }
 
-int	checkSize(t_map *tMap)
+int	check_edges(char *str, t_map *map)
 {
-	
-	return (0);
-}
+	char	*tmp;
 
-int	checkMap(t_map *tMap)
-{
-	int	i;
-
-	i = 0;
-	tMap->height = 0;
-	while (tMap->contest[i] && tMap->contest[i] != '\n')
-		i++;
-	tMap->width = i;
-	i = 0;
-	while (tMap->contest[i])
+	tmp = map->arr[0];
+	while (*tmp)
 	{
-		if (tMap->contest[i] == '\n')
-			tMap->height++;
-		i++;
+		if (*tmp != '1')
+			return (0);
+		tmp++;
 	}
-	tMap->height++;
-	if (checkSize(tMap))
-		return (1);
-	return (0);
+	tmp = map->arr[map->height - 1];
+	while (*tmp)
+	{
+		if (*tmp != '1')
+			return (0);
+		tmp++;
+	}
+	if (str[0] != '1')
+		return (0);
+	if (str[ft_strlen(str) - 1] != '1')
+		return (0);
+	if (!check_content(map))
+		return (0);
+	return (1);
+}
+
+int	check_map(t_map *tMap)
+{
+	int	count;
+	int	i;
+	int	nums;
+
+	i = 0;
+	tMap->arr = ft_split(tMap->contest, '\n');
+	count = (int)ft_strlen(tMap->arr[i]);
+	while (tMap->arr[i])
+	{
+		if (count == (int)ft_strlen(tMap->arr[i]))
+			i++;
+		else
+			return (0);
+	}
+	nums = i - 1;
+	tMap->width = count;
+	tMap->height = i;
+	if (!((tMap->width >= 3 && tMap->height >= 5) || \
+		(tMap->width >= 5 && tMap->height >= 3) || \
+			(tMap->width >= 4 && tMap->height >= 4)))
+		return (0);
+	while (--nums)
+		if (!check_edges(tMap->arr[nums], tMap))
+			return (0);
+	return (1);
+}
+
+void	full_check(t_map *tmap, char *str)
+{
+	int	fd;
+	int	rd;
+
+	tmap->contest = ft_substr(str, ft_strlen(str) - 4, 4);
+	rd = ft_strncmp(tmap->contest, ".ber", 4);
+	free(tmap->contest);
+	fd = open(str, O_RDONLY);
+	if (fd < 0 || rd != 0)
+	{
+		printf("Incorrect map!\n");
+		exit (1);
+	}
+	tmap->contest = malloc(10000);
+	rd = (int)read(fd, tmap->contest, 10000);
+	tmap->contest[rd] = '\0';
+	if (!check_map(tmap))
+	{
+		printf("Incorrect map!\n");
+		exit (1);
+	}
 }
 
 int	main(int ac, char **ag)
 {
-	int	fd;
-	int	readByte;
-	t_map map;
+	t_map	map;
 
 	if (ac == 2)
 	{
-		fd = open(ag[1], O_RDONLY);
-		map.contest = malloc(10000);
-		readByte = read(fd, map.contest, 10000);
-		map.contest[readByte] = '\0';
-		if (!checkMap(map))
-		{
-			printf("Incorrect map!\n");
-			return (0);
-		}
+		full_check(&map, ag[1]);
+		draw_map(&map);
+		mlx_key_hook(map.win, actions, &map);
+		mlx_hook(map.win, 17, 0, leave_game, &map);
+		mlx_loop(map.mlx);
 	}
 	return (0);
 }
