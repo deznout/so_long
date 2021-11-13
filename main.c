@@ -35,7 +35,7 @@ int	check_content(t_map *map)
 		}
 		map->i++;
 	}
-	if (map->coins < 1 && map->exits < 1 && map->pos < 1)
+	if (map->coins < 1 || map->exits < 1 || map->pos < 1)
 		return (0);
 	return (1);
 }
